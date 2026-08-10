@@ -41,6 +41,7 @@ function init(){
   $("date").addEventListener("change",()=>loadDateIntoForm($("date").value));
   $("photo").addEventListener("change",previewPhoto);
   ["breakfast","lunch","dinner"].forEach(id=>$(id).addEventListener("input",updateMealTotal));
+  ["breakfast","lunch","dinner"].forEach(id=>$(id).addEventListener("change",saveMealSlots));
   if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;$("installBanner").classList.add("show")});
   window.addEventListener("appinstalled",()=>{$("installBanner").classList.remove("show");deferredInstallPrompt=null;toast("FitTrack installed ✓")});
@@ -137,6 +138,15 @@ function previewPhoto(e){
 function updateMealTotal(){
   const mealValues=[num("breakfast"),num("lunch"),num("dinner")].filter(Number.isFinite);
   if(mealValues.length)$('calories').value=mealValues.reduce((sum,value)=>sum+value,0);
+}
+function saveMealSlots(){
+  const date=$("date").value||localDate();
+  const mealValues=[num("breakfast"),num("lunch"),num("dinner")].filter(Number.isFinite);
+  const old=existing(date)||{date,weight:null,calories:null,water:null,exercise:null,sleep:null,mood:null,notes:"",photo:null};
+  old.breakfast=num("breakfast");old.lunch=num("lunch");old.dinner=num("dinner");
+  if(mealValues.length)old.calories=mealValues.reduce((sum,value)=>sum+value,0);
+  entries=entries.filter(x=>x.date!==date);entries.push(old);entries.sort((a,b)=>a.date.localeCompare(b.date));save();
+  $("calories").value=old.calories??"";
 }
 
 async function saveEntry(e){
